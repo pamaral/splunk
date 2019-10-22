@@ -1,0 +1,21 @@
+## queue time per host
+index=prod sourcetype=OtcsSummaryTimings (date_hour>10 AND date_hour<18) starttime="03/01/2018:10:00:00" endtime="03/06/2018:17:59:59" NOT ORA NOT Sorry NOT runreport NOT invalid | rex field=host "(?<host_type>df.)"  | bucket _time span=day | stats count, count(eval(if(QueueTime > 0.5, QueueTime, null()))) as queued, avg(eval(if(QueueTime > 0.5, QueueTime, null()))) as averageQueue  by _time, host_type | sort - _time
+
+## otdsintegration.redirect - count per day per user
+index=prod sourcetype=OtcsSummaryTimings starttime="02/01/2018:10:00:00" endtime="02/28/2018:17:59:59"  otdsintegration.redirect | bucket _time span=day | stats count BY _time ContextUserName  | sort - count | where count>1000
+
+index=prod sourcetype=OtcsSummaryTimings host=dfwzp* starttime="08/01/2017:00:00:00" endtime="03/01/2018:00:00:00" NOT ORA NOT Sorry  NOT "func=ll.index"  NOT "func=llworkspace"  NOT "ll.overview"  NOT "ll.browse"  NOT "ll.facet" NOT FunctionAction="LL.Login" NOT FunctionAction="ll.runReport" | stats count by ObjectId | where ObjectId>0
+
+index=prod sourcetype=OtcsSummaryTimings host=dfwzp* starttime="08/01/2017:00:00:00" endtime="03/01/2018:00:00:00" NOT ORA NOT Sorry  NOT "func=ll.index"  NOT "func=llworkspace"  NOT "ll.overview"  NOT "ll.browse"  NOT "ll.facet" NOT FunctionAction="LL.Login" NOT FunctionAction="ll.runReport"  | stats count by ObjectId | where ObjectId>0 |  sort - count
+
+index=prod sourcetype=OtcsSummaryTimings webreports | bucket _time span=day | stats count BY _time ContextUserName | sort - count  | where count>1000
+
+index=prod sourcetype=OtcsSummaryTimings webreports | bucket _time span=day | stats count BY _time ContextUserName | sort - count  | where count>1000
+
+index=prod sourcetype=OtcsSummaryTimings webreports gerlach starttime="06/12/2018:17:23:00" endtime="06/12/2018:17:23:30" | bucket _time span=second | stats count(ExecutionTime), sum(ExecutionTime) by _time
+
+
+## report of usage
+index=prod sourcetype=OtcsSummaryTimings date_month=may date_year=2019 NOT Error="*" | eval func=lower(func) | eventstats count as TotalRequests, sum(ExecutionTime) as TotalExecution | eventstats count as TotalRequestsByFunc, sum(ExecutionTime) as TotalExecutionByFunc by func | eval Weight = round(TotalRequestsByFunc/TotalRequests*100,2) | eval Importance = round(TotalExecutionByFunc/TotalExecution*100,2) | stats values(TotalRequestsByFunc) as Requests, values(TotalExecutionByFunc) as ExecutionTime, values(Weight) as Weight, values(Importance) as Importance by func | sort - Importance | where (Importance>0 OR Weight>0)
+
+
